@@ -3,7 +3,7 @@ import {Task, User, LoginCredentials, RegisterCredentials} from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://localhost:3000',
+  baseUrl: 'http://192.168.220.138:3000',
   prepareHeaders: async headers => {
     const token = await AsyncStorage.getItem('token');
     if (token) {
@@ -29,7 +29,7 @@ export const api = createApi({
       RegisterCredentials
     >({
       query: credentials => ({
-        url: '/auth/register',
+        url: '/auth/signup',
         method: 'POST',
         body: credentials,
       }),
