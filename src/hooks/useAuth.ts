@@ -1,8 +1,12 @@
-import {useSelector} from 'react-redux';
+import {useEffect} from 'react';
+import {useSelector, useDispatch} from 'react-redux';
 import {RootState} from '../store';
-import {useLoginMutation, useRegisterMutation} from '../store/api';
+import {
+  useLoginMutation,
+  useRegisterMutation,
+  useValidateTokenQuery,
+} from '../store/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useDispatch} from 'react-redux';
 import {setCredentials, logout} from '../store/authSlice';
 
 export const useAuth = () => {
@@ -11,6 +15,24 @@ export const useAuth = () => {
   const [login] = useLoginMutation();
   const [register] = useRegisterMutation();
 
+  // Fetch user validation from API on app load
+  const {data, error, isFetching} = useValidateTokenQuery(undefined, {
+    skip: !auth.token, // Skip validation if no token is stored
+  });
+
+  useEffect(() => {
+    const restoreSession = async () => {
+      const storedToken = await AsyncStorage.getItem('token');
+      if (storedToken && data?.user) {
+        dispatch(setCredentials({token: storedToken, user: data.user}));
+      } else if (error) {
+        dispatch(logout());
+      }
+    };
+    restoreSession();
+  }, [data, error, dispatch]);
+
+  // Handle login
   const handleLogin = async (email: string, password: string) => {
     try {
       const result = await login({email, password}).unwrap();
@@ -21,6 +43,7 @@ export const useAuth = () => {
     }
   };
 
+  // Handle registration
   const handleRegister = async (
     email: string,
     password: string,
@@ -35,6 +58,7 @@ export const useAuth = () => {
     }
   };
 
+  // Handle logout
   const handleLogout = async () => {
     await AsyncStorage.removeItem('token');
     dispatch(logout());
@@ -43,6 +67,7 @@ export const useAuth = () => {
   return {
     isAuthenticated: auth.isAuthenticated,
     user: auth.user,
+    isLoading: isFetching, // Shows loading state while validating session
     login: handleLogin,
     register: handleRegister,
     logout: handleLogout,

@@ -1,11 +1,12 @@
 import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
 import {Task, User, LoginCredentials, RegisterCredentials} from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {API_BASE_URL} from '@env'
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://192.168.220.138:3000',
+  baseUrl: API_BASE_URL,
   prepareHeaders: async headers => {
-    const token = await AsyncStorage.getItem('token');
+    const token = (await AsyncStorage.getItem('token')) || '';
     if (token) {
       headers.set('authorization', `Bearer ${token}`);
     }
@@ -17,6 +18,12 @@ export const api = createApi({
   baseQuery,
   tagTypes: ['Task'],
   endpoints: builder => ({
+    validateToken: builder.query<{user: User}, void>({
+      query: () => ({
+        url: '/auth/validate', // Make sure this matches your backend endpoint
+        method: 'GET',
+      }),
+    }),
     login: builder.mutation<{token: string; user: User}, LoginCredentials>({
       query: credentials => ({
         url: '/auth/login',
@@ -76,4 +83,6 @@ export const {
   useCreateTaskMutation,
   useUpdateTaskMutation,
   useDeleteTaskMutation,
+  useValidateTokenQuery,
+  useLazyValidateTokenQuery,
 } = api;
