@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {View, StyleSheet, FlatList} from 'react-native';
 import {useGetTasksQuery} from '../store/api';
 import {CategoryCard} from '../components/CategoryCard';

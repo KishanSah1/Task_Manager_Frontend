@@ -6,7 +6,7 @@ import {
   ActivityIndicator,
   Text,
 } from 'react-native';
-import {FAB} from 'react-native-paper';
+import { FAB, Title } from 'react-native-paper';
 import {useGetTasksQuery, useDeleteTaskMutation} from '../store/api';
 import {TaskCard} from '../components/TaskCard';
 import {Task} from '../types';
@@ -78,6 +78,7 @@ export const HomeScreen = () => {
       <FAB
         style={styles.fab}
         icon="plus"
+        label="Add Task"
         onPress={() => navigation.navigate('TaskDetail', {task: undefined})}
       />
     </View>

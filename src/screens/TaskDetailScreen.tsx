@@ -1,6 +1,7 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {View, StyleSheet, ScrollView} from 'react-native';
-import {Button} from 'react-native-paper';
+import {Button, Menu, TextInput, List} from 'react-native-paper';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {Formik} from 'formik';
 import * as Yup from 'yup';
 import {useCreateTaskMutation, useUpdateTaskMutation} from '../store/api';
@@ -10,6 +11,25 @@ import {RootStackParamList} from '../navigation/types';
 
 type TaskDetailScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetail'>;
 
+const PRIORITY_OPTIONS = [
+  {label: 'Low', value: 'low'},
+  {label: 'Medium', value: 'medium'},
+  {label: 'High', value: 'high'},
+];
+
+const CATEGORY_OPTIONS = [
+  {label: 'Work', value: 'work'},
+  {label: 'Personal', value: 'personal'},
+  {label: 'Shopping', value: 'shopping'},
+  {label: 'Health', value: 'health'},
+  {label: 'Education', value: 'education'},
+];
+
+const COMPLETION_OPTIONS = [
+  {label: 'Not Completed', value: false},
+  {label: 'Completed', value: true},
+];
+
 const taskSchema = Yup.object().shape({
   title: Yup.string().required('Title is required'),
   description: Yup.string().required('Description is required'),
@@ -18,6 +38,7 @@ const taskSchema = Yup.object().shape({
     .oneOf(['low', 'medium', 'high'])
     .required('Priority is required'),
   category: Yup.string().required('Category is required'),
+  isCompleted: Yup.boolean().required('Completion status is required'),
 });
 
 export const TaskDetailScreen = () => {
@@ -25,6 +46,12 @@ export const TaskDetailScreen = () => {
   const navigation = useNavigation();
   const [createTask] = useCreateTaskMutation();
   const [updateTask] = useUpdateTaskMutation();
+
+  // State for menus
+  const [priorityMenuVisible, setPriorityMenuVisible] = useState(false);
+  const [categoryMenuVisible, setCategoryMenuVisible] = useState(false);
+  const [completionMenuVisible, setCompletionMenuVisible] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const task = route.params?.task;
   const isEditing = !!task;
@@ -35,17 +62,23 @@ export const TaskDetailScreen = () => {
         initialValues={{
           title: task?.title ?? '',
           description: task?.description ?? '',
-          dueDate: task?.dueDate ?? new Date().toISOString(),
+          dueDate: task?.dueDate ? new Date(task.dueDate) : new Date(),
           priority: task?.priority ?? 'medium',
           category: task?.category ?? '',
+          isCompleted: task?.completed ?? false,
         }}
         validationSchema={taskSchema}
         onSubmit={async values => {
           try {
+            const submitValues = {
+              ...values,
+              dueDate: values.dueDate.toISOString(),
+            };
+
             if (isEditing && task) {
-              await updateTask({id: task.id, task: values}).unwrap();
+              await updateTask({id: task.id, task: submitValues}).unwrap();
             } else {
-              await createTask(values).unwrap();
+              await createTask(submitValues).unwrap();
             }
             navigation.goBack();
           } catch (error) {
@@ -59,6 +92,7 @@ export const TaskDetailScreen = () => {
           values,
           errors,
           touched,
+          setFieldValue,
         }) => (
           <View>
             <CustomInput
@@ -68,6 +102,7 @@ export const TaskDetailScreen = () => {
               onBlur={handleBlur('title')}
               error={touched.title && errors.title}
             />
+
             <CustomInput
               label="Description"
               value={values.description}
@@ -77,28 +112,125 @@ export const TaskDetailScreen = () => {
               multiline
               numberOfLines={4}
             />
-            <CustomInput
+
+            {/* Due Date Picker */}
+            <TextInput
               label="Due Date"
-              value={values.dueDate}
-              onChangeText={handleChange('dueDate')}
-              onBlur={handleBlur('dueDate')}
-              error={touched.dueDate && errors.dueDate}
+              value={values.dueDate.toLocaleDateString()}
+              onPressIn={() => setShowDatePicker(true)}
+              mode="outlined"
+              style={styles.input}
+              error={touched.dueDate && !!errors.dueDate}
             />
-            <CustomInput
-              label="Priority"
-              value={values.priority}
-              onChangeText={handleChange('priority')}
-              onBlur={handleBlur('priority')}
-              error={touched.priority && errors.priority}
-            />
-            <CustomInput
-              label="Category"
-              value={values.category}
-              onChangeText={handleChange('category')}
-              onBlur={handleBlur('category')}
-              error={touched.category && errors.category}
-            />
-            <Button mode="contained" onPress={() => handleSubmit()}>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={values.dueDate}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (selectedDate) {
+                    setFieldValue('dueDate', selectedDate);
+                  }
+                }}
+              />
+            )}
+
+            {/* Priority Menu */}
+            <Menu
+              visible={priorityMenuVisible}
+              onDismiss={() => setPriorityMenuVisible(false)}
+              anchor={
+                <TextInput
+                  label="Priority"
+                  value={
+                    PRIORITY_OPTIONS.find(
+                      option => option.value === values.priority,
+                    )?.label
+                  }
+                  onPressIn={() => setPriorityMenuVisible(true)}
+                  mode="outlined"
+                  style={styles.input}
+                  error={touched.priority && !!errors.priority}
+                />
+              }>
+              {PRIORITY_OPTIONS.map(option => (
+                <Menu.Item
+                  key={option.value}
+                  onPress={() => {
+                    setFieldValue('priority', option.value);
+                    setPriorityMenuVisible(false);
+                  }}
+                  title={option.label}
+                />
+              ))}
+            </Menu>
+
+            {/* Category Menu */}
+            <Menu
+              visible={categoryMenuVisible}
+              onDismiss={() => setCategoryMenuVisible(false)}
+              anchor={
+                <TextInput
+                  label="Category"
+                  value={
+                    CATEGORY_OPTIONS.find(
+                      option => option.value === values.category,
+                    )?.label
+                  }
+                  onPressIn={() => setCategoryMenuVisible(true)}
+                  mode="outlined"
+                  style={styles.input}
+                  error={touched.category && !!errors.category}
+                />
+              }>
+              {CATEGORY_OPTIONS.map(option => (
+                <Menu.Item
+                  key={option.value}
+                  onPress={() => {
+                    setFieldValue('category', option.value);
+                    setCategoryMenuVisible(false);
+                  }}
+                  title={option.label}
+                />
+              ))}
+            </Menu>
+
+            {/* Completion Status Menu */}
+            <Menu
+              visible={completionMenuVisible}
+              onDismiss={() => setCompletionMenuVisible(false)}
+              anchor={
+                <TextInput
+                  label="Completion Status"
+                  value={
+                    COMPLETION_OPTIONS.find(
+                      option => option.value === values.isCompleted,
+                    )?.label
+                  }
+                  onPressIn={() => setCompletionMenuVisible(true)}
+                  mode="outlined"
+                  style={styles.input}
+                  error={touched.isCompleted && !!errors.isCompleted}
+                />
+              }>
+              {COMPLETION_OPTIONS.map(option => (
+                <Menu.Item
+                  key={option.value.toString()}
+                  onPress={() => {
+                    setFieldValue('isCompleted', option.value);
+                    setCompletionMenuVisible(false);
+                  }}
+                  title={option.label}
+                />
+              ))}
+            </Menu>
+
+            <Button
+              mode="contained"
+              onPress={() => handleSubmit()}
+              style={styles.submitButton}>
               {isEditing ? 'Update Task' : 'Create Task'}
             </Button>
           </View>
@@ -112,5 +244,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  input: {
+    marginVertical: 8,
+  },
+  submitButton: {
+    marginTop: 16,
   },
 });
