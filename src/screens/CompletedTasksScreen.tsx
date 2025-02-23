@@ -8,8 +8,7 @@ import {RootStackParamList} from '../navigation/types';
 import { Task } from './../navigation/types';
 
 export const CompletedTasksScreen = () => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {data: tasks} = useGetTasksQuery();
 
   const completedTasks = tasks?.filter(task => task.completed) ?? [];
@@ -21,7 +20,14 @@ export const CompletedTasksScreen = () => {
         renderItem={({item}) => (
           <TaskCard
             task={item}
-            onPress={task => navigation.navigate('TaskDetail', {task})}
+            onPress={task =>
+              navigation.navigate('TaskDetail', {
+                task: {
+                  ...task,
+                  dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+                },
+              })
+            }
             onDelete={() => {}}
           />
         )}

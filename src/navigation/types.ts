@@ -1,7 +1,8 @@
 //import {Task} from '../types';
 
 export interface Task {
-  id: string;
+  _id?: string; // MongoDB ID
+  id?: string; // Backward compatibility
   title: string;
   description?: string;
   completed: boolean;

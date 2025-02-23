@@ -23,7 +23,8 @@ type HomeScreenNavigationProp = CompositeNavigationProp<
 
 export const HomeScreen = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const {data: tasks = [], isLoading} = useGetTasksQuery();
+  const {data = [], isLoading} = useGetTasksQuery();
+  const tasks = data.filter(task => !task.completed);
   const [deleteTask] = useDeleteTaskMutation();
 
   const handleTaskPress = (task: Task) => {
@@ -36,22 +37,20 @@ export const HomeScreen = () => {
     navigation.navigate('TaskDetail', {task: navigationTask});
   };
 
-  const handleDeleteTask = async (id: string) => {
+  const handleDeleteTask = async (taskId: string) => {
     try {
-      await deleteTask(id).unwrap();
-      // The list will automatically update due to RTK Query cache invalidation
+      await deleteTask(taskId).unwrap();
     } catch (error) {
       console.error('Failed to delete task:', error);
-      // You might want to add error handling here (e.g., show a toast message)
     }
   };
 
   const renderItem = ({item}: {item: Task}) => (
     <TaskCard
-      key={item.id}
+      key={item._id || item.id}
       task={item}
       onPress={handleTaskPress}
-      onDelete={handleDeleteTask}
+      onDelete={() => handleDeleteTask(item._id || item.id || '')}
     />
   );
 
@@ -71,7 +70,12 @@ export const HomeScreen = () => {
         keyExtractor={item => item.id}
         ListEmptyComponent={() => (
           <View style={styles.centered}>
-            <Text>No tasks found</Text>
+            <Text style={styles.emptyTitle}>All Caught Up! </Text>
+            <Text style={styles.emptySubtitle}>No pending tasks found</Text>
+            <Text style={styles.emptyMessage}>
+              Time to start something new! Tap the button below to add your next
+              task.
+            </Text>
           </View>
         )}
       />
@@ -94,6 +98,25 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 220,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 18,
+    color: '#666',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyMessage: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+    maxWidth: 300,
   },
   fab: {
     position: 'absolute',

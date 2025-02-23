@@ -5,7 +5,8 @@ export interface User {
 }
 
 export interface Task {
-  id: string;
+  _id?: string; // MongoDB ID
+  id: string; // Frontend ID
   title: string;
   description: string;
   dueDate: string;
@@ -13,6 +14,10 @@ export interface Task {
   category: string;
   completed: boolean;
   userId: string;
+}
+
+export interface MongoDBTask extends Omit<Task, 'id'> {
+  _id: string;
 }
 
 export interface Category {

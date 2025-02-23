@@ -33,7 +33,7 @@ export const CategoriesScreen = () => {
         renderItem={({item}) => (
           <CategoryCard category={item} onPress={() => {}} />
         )}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.id.toString()}
       />
     </View>
   );
