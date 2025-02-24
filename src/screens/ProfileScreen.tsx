@@ -87,7 +87,7 @@ export const ProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.screenTitle}>Profile</Text>
+      {/* <Text style={styles.screenTitle}>Profile</Text> */}
 
       <Card style={styles.card}>
         <Card.Content>

@@ -1,10 +1,10 @@
 import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
 import {Task, User, LoginCredentials, RegisterCredentials} from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {API_BASE_URL} from '@env'
+//import {API_BASE_URL} from '@env'
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: API_BASE_URL,
+  baseUrl: 'https://task-manager-backend-khpd.onrender.com',
   prepareHeaders: async headers => {
     const token = (await AsyncStorage.getItem('token')) || '';
     if (token) {

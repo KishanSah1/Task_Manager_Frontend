@@ -88,6 +88,9 @@ export const TaskDetailScreen = () => {
         task: {
           ...task,
           completed: true,
+          dueDate: task?.dueDate
+            ? new Date(task.dueDate).toISOString()
+            : undefined, // Ensure dueDate is a string
         },
       }).unwrap();
       navigation.goBack();
